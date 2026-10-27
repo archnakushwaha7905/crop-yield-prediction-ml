@@ -17,100 +17,158 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------- Custom Website Design ----------
+# ---------- Website Design ----------
 st.markdown("""
 <style>
 .stApp {
-    background: #f3f8f1;
+    background-color: #f3f8f1;
     color: #193b2b;
 }
+
 .block-container {
     max-width: 1200px;
     padding-top: 2rem;
     padding-bottom: 3rem;
 }
+
 header[data-testid="stHeader"] {
     background: transparent;
 }
+
 .hero {
     background: linear-gradient(120deg, #123d2b, #2e8950);
-    padding: 38px;
-    border-radius: 22px;
-    color: white;
+    padding: 30px;
+    border-radius: 20px;
+    color: white !important;
     margin-bottom: 25px;
 }
+
 .hero h1 {
-    color: white;
+    color: white !important;
     font-size: 42px;
-    margin: 0;
 }
+
 .hero p {
-    color: #e5f5e8;
+    color: white !important;
     font-size: 17px;
-    margin-top: 12px;
 }
+
 .tag {
     display: inline-block;
     background: #dff4df;
-    color: #21633b;
+    color: #21633b !important;
     padding: 7px 13px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: bold;
     margin-bottom: 12px;
 }
+
+.section-title {
+    color: #174c30 !important;
+    font-size: 27px;
+    font-weight: bold;
+    margin-top: 22px;
+}
+
+.section-sub {
+    color: #435b49 !important;
+    margin-bottom: 20px;
+}
+
 .card {
-    background: white;
+    background: #ffffff;
     padding: 22px;
     border-radius: 16px;
     border: 1px solid #dce9d8;
-    box-shadow: 0 5px 18px rgba(25,70,40,.06);
     margin-bottom: 15px;
 }
+
 .card h3 {
-    color: #2d7947;
+    color: #21633b !important;
     font-size: 16px;
 }
+
 .metric {
-    color: #164b2e;
-    font-size: 27px;
-    font-weight: 700;
+    color: #123d2b !important;
+    -webkit-text-fill-color: #123d2b !important;
+    font-size: 32px !important;
+    font-weight: 800 !important;
+    opacity: 1 !important;
 }
-.section-title {
-    color: #174c30;
-    font-size: 27px;
-    font-weight: 700;
-    margin: 22px 0 6px 0;
+
+.stMarkdown,
+.stMarkdown p,
+.stMarkdown li {
+    color: #193b2b;
 }
-.section-sub {
-    color: #627467;
-    margin-bottom: 20px;
+
+label,
+.stSelectbox label,
+.stNumberInput label {
+    color: #193b2b !important;
 }
-div.stButton > button {
-    background: #217342;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 22px;
-    font-weight: 600;
-    width: 100%;
+
+input,
+textarea {
+    color: #193b2b !important;
+    background-color: #ffffff !important;
 }
-div.stButton > button:hover {
-    background: #15532f;
-    color: white;
-    border: none;
+
+/* FIX: Model Analytics numbers */
+div[data-testid="stMetric"] {
+    background: #ffffff !important;
+    padding: 18px !important;
+    border-radius: 14px;
+    border: 1px solid #dce9d8;
 }
+
+div[data-testid="stMetricLabel"],
+div[data-testid="stMetricLabel"] p {
+    color: #193b2b !important;
+    -webkit-text-fill-color: #193b2b !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+div[data-testid="stMetricValue"],
+div[data-testid="stMetricValue"] div,
+div[data-testid="stMetricValue"] span {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    text-shadow: none !important;
+}
+
+div[data-testid="stMetricDelta"] {
+    color: #193b2b !important;
+    -webkit-text-fill-color: #193b2b !important;
+}
+
 div[data-testid="stForm"] {
-    background: white;
+    background: #ffffff;
     padding: 24px;
     border-radius: 18px;
     border: 1px solid #dce9d8;
 }
-div[data-testid="stMetric"] {
-    background: white;
-    padding: 15px;
-    border-radius: 14px;
-    border: 1px solid #dce9d8;
+
+div.stButton > button {
+    background: #217342;
+    color: white !important;
+    border-radius: 10px;
+    border: none;
+    padding: 12px 22px;
+    font-weight: bold;
+    width: 100%;
+}
+
+div.stButton > button:hover {
+    background: #15532f;
+    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -125,88 +183,111 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- Load Dataset ----------
-DATA_PATH = Path("dataset/crop_yield_dataset.csv")
+# ---------- Dataset Path ----------
+DATA_PATH = (
+    Path(__file__).resolve().parent
+    / "dataset"
+    / "crop_yield_dataset.csv"
+)
+
 
 @st.cache_data
-def load_data(path):
-    return pd.read_csv(path)
+def load_data(path, modified_time):
+    data = pd.read_csv(path)
+    data.columns = data.columns.str.strip()
+    return data
+
 
 @st.cache_resource
 def train_model(data_path, modified_time):
-    df = pd.read_csv(data_path)
-    df.columns = df.columns.str.strip()
+    data = pd.read_csv(data_path)
+    data.columns = data.columns.str.strip()
 
-    target_candidates = [
+    target_names = {
         "yield (kg/ha)",
         "yield",
         "crop yield",
         "crop_yield",
         "yield_kg_per_ha"
-    ]
+    }
 
     target = next(
-        (c for c in df.columns
-         if c.strip().lower() in target_candidates),
+        (
+            col for col in data.columns
+            if col.strip().lower() in target_names
+        ),
         None
     )
 
     if target is None:
         raise ValueError(
             "Yield column not found. Available columns: "
-            + ", ".join(df.columns)
+            + ", ".join(data.columns)
         )
 
-    df[target] = pd.to_numeric(df[target], errors="coerce")
-    df = df.dropna(subset=[target])
+    data[target] = pd.to_numeric(
+        data[target], errors="coerce"
+    )
+    data = data.dropna(subset=[target])
 
-    if len(df) < 5:
-        raise ValueError("The dataset contains too few valid records.")
+    if len(data) < 5:
+        raise ValueError(
+            "Dataset has too few valid records."
+        )
 
-    if len(df) > 20000:
-        df = df.sample(20000, random_state=42)
+    if len(data) > 20000:
+        data = data.sample(20000, random_state=42)
 
-    X = df.drop(columns=[target]).copy()
-    y = df[target].copy()
+    X = data.drop(columns=[target]).copy()
+    y = data[target].copy()
 
-    # Remove columns that contain no useful values
     X = X.dropna(axis=1, how="all")
 
-    # Remove ID-like columns
     X = X.drop(
         columns=[
-            c for c in X.columns
-            if c.strip().lower() in ["id", "index", "unnamed: 0"]
+            col for col in X.columns
+            if col.strip().lower()
+            in ["id", "index", "unnamed: 0"]
         ],
         errors="ignore"
     )
 
-    numeric_cols = X.select_dtypes(include=np.number).columns.tolist()
+    if X.shape[1] == 0:
+        raise ValueError("No usable input features found.")
+
+    numeric_cols = X.select_dtypes(
+        include=np.number
+    ).columns.tolist()
+
     categorical_cols = [
-        c for c in X.columns if c not in numeric_cols
+        col for col in X.columns
+        if col not in numeric_cols
     ]
 
     transformers = []
 
     if numeric_cols:
-        numeric_pipeline = Pipeline([
-            ("imputer", SimpleImputer(strategy="median"))
-        ])
-        transformers.append(
-            ("numeric", numeric_pipeline, numeric_cols)
-        )
+        transformers.append((
+            "numeric",
+            Pipeline([
+                ("imputer", SimpleImputer(strategy="median"))
+            ]),
+            numeric_cols
+        ))
 
     if categorical_cols:
-        categorical_pipeline = Pipeline([
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore"))
-        ])
-        transformers.append(
-            ("categorical", categorical_pipeline, categorical_cols)
-        )
-
-    if not transformers:
-        raise ValueError("No usable input features were found.")
+        transformers.append((
+            "categorical",
+            Pipeline([
+                ("imputer", SimpleImputer(
+                    strategy="most_frequent"
+                )),
+                ("encoder", OneHotEncoder(
+                    handle_unknown="ignore"
+                ))
+            ]),
+            categorical_cols
+        ))
 
     preprocessor = ColumnTransformer(transformers)
 
@@ -231,23 +312,38 @@ def train_model(data_path, modified_time):
         "mae": mean_absolute_error(y_test, predictions)
     }
 
-    return model, X, y, target, metrics, numeric_cols, categorical_cols
+    return (
+        model, X, target, metrics,
+        numeric_cols, categorical_cols
+    )
 
 
+# ---------- Load Dataset ----------
 if not DATA_PATH.exists():
     st.error(
-        "Dataset not found. Please place crop_yield_dataset.csv "
-        "inside the dataset folder."
+        "Dataset not found! Keep your CSV file here: "
+        "dataset/crop_yield_dataset.csv"
     )
     st.stop()
 
-df = load_data(str(DATA_PATH))
+try:
+    df = load_data(
+        str(DATA_PATH),
+        DATA_PATH.stat().st_mtime
+    )
+except Exception as e:
+    st.error(f"Unable to load dataset: {e}")
+    st.stop()
 
-# ---------- Overview Cards ----------
-st.markdown('<div class="section-title">Dashboard Overview</div>',
-            unsafe_allow_html=True)
+
+# ---------- Dashboard Overview ----------
 st.markdown(
-    '<div class="section-sub">An overview of your agricultural dataset.</div>',
+    '<div class="section-title">Dashboard Overview</div>',
+    unsafe_allow_html=True
+)
+st.markdown(
+    '<div class="section-sub">'
+    'Overview of your agricultural dataset.</div>',
     unsafe_allow_html=True
 )
 
@@ -262,8 +358,8 @@ with c1:
 
 with c2:
     st.markdown(
-        f'<div class="card"><h3>🧾 Available Features</h3>'
-        f'<div class="metric">{len(df.columns) - 1}</div></div>',
+        f'<div class="card"><h3>🧾 Dataset Columns</h3>'
+        f'<div class="metric">{len(df.columns)}</div></div>',
         unsafe_allow_html=True
     )
 
@@ -274,18 +370,25 @@ with c3:
         unsafe_allow_html=True
     )
 
-# ---------- Train Model ----------
-st.markdown('<div class="section-title">Model Analytics</div>',
-            unsafe_allow_html=True)
+
+# ---------- Model Analytics ----------
 st.markdown(
-    '<div class="section-sub">Train the model and evaluate its performance.</div>',
+    '<div class="section-title">Model Analytics</div>',
+    unsafe_allow_html=True
+)
+st.markdown(
+    '<div class="section-sub">'
+    'Train and evaluate the machine learning model.</div>',
     unsafe_allow_html=True
 )
 
 if st.button("⚙️ Train Machine Learning Model"):
     with st.spinner("Training model. Please wait..."):
         try:
-            model, X, y, target, metrics, nums, cats = train_model(
+            (
+                model, X, target, metrics,
+                nums, cats
+            ) = train_model(
                 str(DATA_PATH),
                 DATA_PATH.stat().st_mtime
             )
@@ -302,32 +405,41 @@ if st.button("⚙️ Train Machine Learning Model"):
         except Exception as e:
             st.error(f"Unable to train the model: {e}")
 
+
+# ---------- Display Model Numbers ----------
 if "metrics" in st.session_state:
     m1, m2 = st.columns(2)
 
     with m1:
         st.metric(
-            "R² Score",
-            f"{st.session_state['metrics']['r2']:.3f}"
+            label="R² Score",
+            value=f"{st.session_state['metrics']['r2']:.3f}"
         )
 
     with m2:
         st.metric(
-            "Mean Absolute Error",
-            f"{st.session_state['metrics']['mae']:.2f}"
+            label="Mean Absolute Error",
+            value=f"{st.session_state['metrics']['mae']:.2f}"
         )
 
-# ---------- Prediction Section ----------
-st.markdown('<div class="section-title">🌾 Predict Crop Yield</div>',
-            unsafe_allow_html=True)
+
+# ---------- Crop Yield Prediction ----------
 st.markdown(
-    '<div class="section-sub">Enter the agricultural conditions below '
+    '<div class="section-title">🌾 Predict Crop Yield</div>',
+    unsafe_allow_html=True
+)
+st.markdown(
+    '<div class="section-sub">'
+    'Enter the agricultural conditions below '
     'to estimate crop yield.</div>',
     unsafe_allow_html=True
 )
 
 if "model" not in st.session_state:
-    st.info("Train the machine learning model first to enable predictions.")
+    st.info(
+        "Click 'Train Machine Learning Model' first "
+        "to enable crop yield predictions."
+    )
 else:
     features = st.session_state["features"]
     numeric_cols = st.session_state["numeric_cols"]
@@ -337,18 +449,21 @@ else:
         st.markdown("### Agricultural Conditions")
 
         input_data = {}
-
         columns = st.columns(2)
 
         for i, col in enumerate(features.columns):
             with columns[i % 2]:
+                label = col.replace("_", " ").title()
+
                 if col in numeric_cols:
                     series = pd.to_numeric(
                         features[col], errors="coerce"
                     ).dropna()
 
                     if series.empty:
-                        input_data[col] = 0.0
+                        input_data[col] = st.number_input(
+                            label, value=0.0, key=f"num_{col}"
+                        )
                     else:
                         default = float(series.median())
                         minimum = float(series.min())
@@ -356,17 +471,20 @@ else:
 
                         if minimum == maximum:
                             input_data[col] = st.number_input(
-                                col.replace("_", " ").title(),
-                                value=default
+                                label,
+                                value=default,
+                                key=f"num_{col}"
                             )
                         else:
                             input_data[col] = st.number_input(
-                                col.replace("_", " ").title(),
+                                label,
                                 min_value=minimum,
                                 max_value=maximum,
-                                value=default
+                                value=default,
+                                key=f"num_{col}"
                             )
-                else:
+
+                elif col in categorical_cols:
                     options = (
                         features[col].dropna().astype(str)
                         .value_counts().index.tolist()
@@ -376,8 +494,7 @@ else:
                         options = ["Unknown"]
 
                     input_data[col] = st.selectbox(
-                        col.replace("_", " ").title(),
-                        options
+                        label, options, key=f"cat_{col}"
                     )
 
         submitted = st.form_submit_button("🌱 Predict Yield")
@@ -389,10 +506,18 @@ else:
                 columns=features.columns
             )
 
-            result = st.session_state["model"].predict(input_df)[0]
+            result = st.session_state["model"].predict(
+                input_df
+            )[0]
 
             target = st.session_state["target"]
-            unit = "kg/ha" if "kg/ha" in target.lower() or target.lower() == "yield" else "yield units"
+
+            if "kg/ha" in target.lower():
+                unit = "kg/ha"
+            elif target.lower() == "yield":
+                unit = "yield units"
+            else:
+                unit = target
 
             st.markdown("---")
             st.markdown("### Prediction Result")
@@ -402,7 +527,8 @@ else:
                 <div class="hero">
                     <p>Estimated Crop Yield</p>
                     <h1>{result:,.2f} {unit}</h1>
-                    <p>Estimate generated using the trained Random Forest model.</p>
+                    <p>Estimate generated using the trained
+                    Random Forest model.</p>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -411,14 +537,16 @@ else:
         except Exception as e:
             st.error(f"Prediction failed: {e}")
 
+
 # ---------- Dataset Preview ----------
 with st.expander("📁 Explore Dataset"):
     st.dataframe(df.head(20), use_container_width=True)
 
+
 # ---------- Footer ----------
 st.markdown("""
 <hr>
-<div style="text-align:center; color:#617365; padding:12px;">
+<div style="text-align:center; color:#435b49; padding:12px;">
     <b>AgriPredict</b> · Crop Yield Prediction Using Machine Learning
     <br>Built with Python, Streamlit and Scikit-learn
 </div>
